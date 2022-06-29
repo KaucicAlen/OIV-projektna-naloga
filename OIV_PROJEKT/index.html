@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <title>OIV Projektna naloga</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script src="bower_components/js-sha1/build/sha1.min.js"></script>
+  <script src="index.js"></script>
+  <script src="dict.js"></script>
+  <div class="sredina">
+    <div class="container">
+      <img src="feri.PNG" class="slikaa" alt="feri">
+      <header>OIV Projektna Naloga <br> leto 2022 </header>
+      <form action="#">
+        <div class="field">
+          <input onkeyup="trigger()" type="text" id="password" placeholder="Vpiši geslo">
+          <span class="showBtn">POKAŽI</span>
+        </div>
+        <div class="indicator">
+          <span class="slabo"></span>
+          <span class="srednje"></span>
+          <span class="mocno"></span>
+        </div>
+        <div class="text"></div>
+        <br>
+        <input type="button" id="button" value="Preveri" onclick="preveriGeslo()">
+      </form>
+      <div id="result"></div>
+      <input type="button" id="button" value="Predlagaj geslo" onclick="predlagajGeslo()">
+      <pre id="predlaganoGeslo"></pre>
+    </div>
+  </div>
+  <div class="footer">
+    <p> © 2022: Alen Kaučič, Liam Galof,  Vivien Štampfer, Erik Kolarić </p>
+  </div>
+  <script>
+    geslo = document.getElementById("password").value;
+
+
+    $(function () {
+      $("#button").on("click", function () {
+
+        var sha = sha1($("#password").val()).toUpperCase();
+        var prefix = sha.substring(0, 5);
+        var suffix = sha.substring(5, sha.length);
+
+        if (geslo === "") {
+          alert("Niste vpisali gesla!");
+        } 
+        else {
+          $.ajax({
+            url: "https://api.pwnedpasswords.com/range/" + prefix
+          }).done(function (response) {
+            var hashes = response.split('\n');
+
+            for (let i = 0; i < hashes.length; i++) {
+              var hash = hashes[i];
+              var h = hash.split(':');
+              if (h[0] === suffix) {
+                $("#result").html("Geslo je ogroženo in bilo najdeno " + h[1] + " krat.");
+                break;
+              } else {
+                $("#result").html("Geslo ni ogroženo.");
+              }
+            }
+          })
+        }
+      });
+    });
+
+    function predlagajGeslo() {
+
+      document.getElementById("predlaganoGeslo").textContent = narediGeslo(25);
+    }
+    function narediGeslo(length) {
+      var result = '';
+      var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&?';
+      var charactersLength = characters.length;
+      for (var i = 0; i < length; i++) {
+        if (i % 5 == 0 && i != 0) {
+          result += '-';
+        }else if (i == 3){
+          result += '$'
+        }
+        result += characters.charAt(Math.floor(Math.random() *
+          charactersLength));
+      }
+      return result;
+    }
+
+
+    const indicator = document.querySelector(".indicator");
+    const input = document.querySelector("input");
+    const slabo = document.querySelector(".slabo");
+    const srednje = document.querySelector(".srednje");
+    const mocno = document.querySelector(".mocno");
+    const text = document.querySelector(".text");
+    const showBtn = document.querySelector(".showBtn");
+    let regExpWeak = /[a-z]/;
+    let regExpMedium = /\d+/;
+    let regExpStrong = /[!,@,#,$,%,^,&,*,?,_,~,-,(,)]/;
+    function trigger() {
+      if (input.value != "") {
+        indicator.style.display = "block";
+        indicator.style.display = "flex";
+        no = 1;
+        if (input.value.length <= 6 && (input.value.match(regExpWeak) || input.value.match(regExpMedium) || input.value.match(regExpStrong))) no = 1;
+        if (input.value.length >= 8 && ((input.value.match(regExpWeak) && input.value.match(regExpMedium)) || (input.value.match(regExpMedium) && input.value.match(regExpStrong)) || (input.value.match(regExpWeak) && input.value.match(regExpStrong)))) no = 2;
+        if (input.value.length >= 12 && input.value.match(regExpWeak) && input.value.match(regExpMedium) && input.value.match(regExpStrong)) no = 3;
+        if (no == 1) {
+          slabo.classList.add("active");
+          text.style.display = "block";
+          text.textContent = "Vaše geslo je prešibko";
+          text.classList.add("slabo");
+        }
+        if (no == 2) {
+          srednje.classList.add("active");
+          slabo.classList.add("active");
+          text.textContent = "Vaše geslo je srednje";
+          text.classList.add("srednje");
+        } else {
+          srednje.classList.remove("active");
+          text.classList.remove("srednje");
+        }
+        if (no == 3) {
+          slabo.classList.add("active");
+          srednje.classList.add("active");
+          mocno.classList.add("active");
+          text.textContent = "Vaše geslo je močno";
+          text.classList.add("mocno");
+        } else {
+          mocno.classList.remove("active");
+          text.classList.remove("mocno");
+        }
+        showBtn.style.display = "block";
+        showBtn.onclick = function () {
+          if (input.type == "password") {
+            input.type = "text";
+            showBtn.textContent = "SKRIJ";
+            showBtn.style.color = "#23ad5c";
+          } else {
+            input.type = "password";
+            showBtn.textContent = "POKAŽI";
+            showBtn.style.color = "#000";
+          }
+        }
+      } else {
+        indicator.style.display = "none";
+        text.style.display = "none";
+        showBtn.style.display = "none";
+      }
+    }
+  </script>
+</body>
+
+</html>
